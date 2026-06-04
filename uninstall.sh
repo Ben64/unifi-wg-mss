@@ -24,11 +24,12 @@ rm -f "$SERVICE_PATH"
 systemctl daemon-reexec
 systemctl daemon-reload
 
-echo "🧹 Removing MSS iptables rules..."
+echo "🧹 Removing MSS iptables rules from UBIOS chain..."
 
 wg_ifaces=$(ip -o link show | awk -F': ' '{print $2}' | grep '^wg') || true
 for iface in $wg_ifaces; do
-    iptables -t mangle -D FORWARD -o "$iface" -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu 2>/dev/null
+    # Dropping explicitly from your custom chain context
+    iptables -t mangle -D UBIOS_FORWARD_TCPMSS -o "$iface" -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu 2>/dev/null
 done
 
 echo "${GREEN}✅ Uninstalled. You may delete ${YELLOW}$WG_DIR${NC} if desired."

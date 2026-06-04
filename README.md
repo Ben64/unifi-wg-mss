@@ -20,7 +20,7 @@ Automatically applies `iptables` MSS clamping rules to all `wg*` (WireGuard) int
 To install with a 5-minute interval (default):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/SISTF/unifi-wg-mss/main/install.sh | sh -s -- 5
+curl -fsSL https://raw.githubusercontent.com/Ben64/unifi-wg-mss/main/install.sh | sh -s -- 5
 ```
 
 Replace `5` with your desired interval in minutes.
@@ -32,7 +32,7 @@ Replace `5` with your desired interval in minutes.
 To completely remove the service, timer, and MSS rules:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/SISTF/unifi-wg-mss/main/uninstall.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Ben64/unifi-wg-mss/main/uninstall.sh | sh
 ```
 
 ---
@@ -79,7 +79,7 @@ systemctl restart wg-mss.timer
 To see all MSS clamping rules currently applied:
 
 ```bash
-iptables -t mangle -S FORWARD | grep TCPMSS
+iptables -t mangle -L UBIOS_FORWARD_TCPMSS -v
 ```
 
 ---
@@ -90,7 +90,7 @@ To manually remove MSS clamping rules from all `wg*` interfaces:
 
 ```bash
 for iface in $(ip -o link show | awk -F': ' '{print $2}' | grep '^wg'); do
-  iptables -t mangle -D FORWARD -o "$iface" -p tcp --tcp-flags SYN,RST SYN \
+  iptables -t mangle -D UBIOS_FORWARD_TCPMSS -o "$iface" -p tcp --tcp-flags SYN,RST SYN \
     -j TCPMSS --clamp-mss-to-pmtu 2>/dev/null
 done
 ```

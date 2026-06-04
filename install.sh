@@ -24,9 +24,9 @@ sleep 10
 wg_ifaces=$(ip -o link show | awk -F': ' '{print $2}' | grep '^wg') || true
 
 for iface in $wg_ifaces; do
-    iptables -w -t mangle -C FORWARD -o "$iface" -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu 2>/dev/null
+    iptables -w -t mangle -C UBIOS_FORWARD_TCPMSS -o "$iface" -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu 2>/dev/null
     if [ $? -ne 0 ]; then
-        iptables -w -t mangle -A FORWARD -o "$iface" -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+        iptables -w -t mangle -A UBIOS_FORWARD_TCPMSS -o "$iface" -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
     fi
 done
 
@@ -97,8 +97,8 @@ systemctl list-timers --all | grep wg-mss || echo "${YELLOW}⚠️ Timer not sch
 echo "\n📝 Last Service Run Log:"
 journalctl -u wg-mss.service --no-pager -n 5
 
-echo "\n📡 Current MSS iptables Rules:"
-iptables -t mangle -S FORWARD | grep TCPMSS || echo "${YELLOW}⚠️ No MSS clamping rules found${NC}"
+echo "\n📡 Current MSS iptables Rules (UBIOS_FORWARD_TCPMSS):"
+iptables -t mangle -L UBIOS_FORWARD_TCPMSS -v -n --line-numbers 2>/dev/null || echo "${YELLOW}⚠️ No MSS clamping rules found${NC}"
 EOF
 
 chmod +x "$WG_DIR/status.sh"
@@ -115,4 +115,4 @@ systemctl start "$TIMER_NAME"
 
 echo ""
 echo "${GREEN}✅ Installed and scheduled every $INTERVAL_MIN min.${NC}"
-iptables -t mangle -S FORWARD | grep TCPMSS || echo "${YELLOW}⚠️ No MSS rules found yet.${NC}"
+iptables -t mangle -L UBIOS_FORWARD_TCPMSS -v -n --line-numbers 2>/dev/null || echo "${YELLOW}⚠️ No MSS clamping rules found${NC}"
